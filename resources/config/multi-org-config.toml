@@ -1,0 +1,86 @@
+#############################################
+# RMail Multi-Organization Configuration
+#############################################
+# This configuration uses PostgreSQL as the centralized database
+# for all client organizations (tenants). Each organization gets
+# isolated domains, users, quotas, and data within a shared server.
+
+# ---- Protocol Listeners ----
+
+[server.listener."smtp"]
+bind = ["[::]:25"]
+protocol = "smtp"
+
+[server.listener."submission"]
+bind = ["[::]:587"]
+protocol = "smtp"
+
+[server.listener."submissions"]
+bind = ["[::]:465"]
+protocol = "smtp"
+tls.implicit = true
+
+[server.listener."imap"]
+bind = ["[::]:143"]
+protocol = "imap"
+
+[server.listener."imaptls"]
+bind = ["[::]:993"]
+protocol = "imap"
+tls.implicit = true
+
+[server.listener.pop3]
+bind = "[::]:110"
+protocol = "pop3"
+
+[server.listener.pop3s]
+bind = "[::]:995"
+protocol = "pop3"
+tls.implicit = true
+
+[server.listener."sieve"]
+bind = ["[::]:4190"]
+protocol = "managesieve"
+
+[server.listener."https"]
+protocol = "http"
+bind = ["[::]:443"]
+tls.implicit = true
+
+[server.listener."http"]
+protocol = "http"
+bind = ["[::]:8080"]
+
+# ---- Storage (PostgreSQL) ----
+# Uses PostgreSQL as the central database for all organizations.
+# All tenants share a single database with logical isolation.
+
+[storage]
+data = "postgres"
+fts = "postgres"
+blob = "postgres"
+lookup = "postgres"
+directory = "internal"
+
+[store."postgres"]
+type = "postgresql"
+url = "%{env:DB_URL}%"
+pool.max-connections = 20
+
+[directory."internal"]
+type = "internal"
+store = "postgres"
+
+# ---- Logging ----
+
+[tracer."stdout"]
+type = "stdout"
+level = "info"
+ansi = false
+enable = true
+
+# ---- Admin Account ----
+
+[authentication.fallback-admin]
+user = "admin"
+secret = "%{env:ADMIN_SECRET}%"
