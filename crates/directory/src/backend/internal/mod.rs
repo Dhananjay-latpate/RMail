@@ -108,6 +108,9 @@ pub enum PrincipalField {
     Urls,
     ExternalMembers,
     Locale,
+    BrandName,
+    BrandLogoUrl,
+    BrandTheme,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
@@ -196,6 +199,9 @@ impl PrincipalField {
             PrincipalField::Urls => 15,
             PrincipalField::ExternalMembers => 16,
             PrincipalField::Locale => 17,
+            PrincipalField::BrandName => 18,
+            PrincipalField::BrandLogoUrl => 19,
+            PrincipalField::BrandTheme => 20,
         }
     }
 
@@ -219,6 +225,9 @@ impl PrincipalField {
             15 => Some(PrincipalField::Urls),
             16 => Some(PrincipalField::ExternalMembers),
             17 => Some(PrincipalField::Locale),
+            18 => Some(PrincipalField::BrandName),
+            19 => Some(PrincipalField::BrandLogoUrl),
+            20 => Some(PrincipalField::BrandTheme),
             _ => None,
         }
     }
@@ -243,6 +252,9 @@ impl PrincipalField {
             PrincipalField::Urls => "urls",
             PrincipalField::ExternalMembers => "externalMembers",
             PrincipalField::Locale => "locale",
+            PrincipalField::BrandName => "brandName",
+            PrincipalField::BrandLogoUrl => "brandLogoUrl",
+            PrincipalField::BrandTheme => "brandTheme",
         }
     }
 
@@ -266,6 +278,9 @@ impl PrincipalField {
             "urls" => Some(PrincipalField::Urls),
             "externalMembers" => Some(PrincipalField::ExternalMembers),
             "locale" => Some(PrincipalField::Locale),
+            "brandName" => Some(PrincipalField::BrandName),
+            "brandLogoUrl" => Some(PrincipalField::BrandLogoUrl),
+            "brandTheme" => Some(PrincipalField::BrandTheme),
             _ => None,
         }
     }

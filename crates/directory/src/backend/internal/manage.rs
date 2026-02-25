@@ -416,6 +416,21 @@ impl ManageDirectory for Store {
         if let Some(picture) = principal_set.take_str(PrincipalField::Locale) {
             create_principal.data.push(PrincipalData::Locale(picture));
         }
+        if let Some(brand_name) = principal_set.take_str(PrincipalField::BrandName) {
+            create_principal
+                .data
+                .push(PrincipalData::BrandName(brand_name));
+        }
+        if let Some(brand_logo_url) = principal_set.take_str(PrincipalField::BrandLogoUrl) {
+            create_principal
+                .data
+                .push(PrincipalData::BrandLogoUrl(brand_logo_url));
+        }
+        if let Some(brand_theme) = principal_set.take_str(PrincipalField::BrandTheme) {
+            create_principal
+                .data
+                .push(PrincipalData::BrandTheme(brand_theme));
+        }
         for url in principal_set
             .take_str_array(PrincipalField::Urls)
             .unwrap_or_default()
@@ -1270,6 +1285,42 @@ impl ManageDirectory for Store {
                         .retain(|v| !matches!(v, PrincipalData::Locale(_)));
                     if !value.is_empty() {
                         principal.data.push(PrincipalData::Locale(value));
+                    }
+                }
+                (
+                    PrincipalAction::Set,
+                    PrincipalField::BrandName,
+                    PrincipalValue::String(value),
+                ) => {
+                    principal
+                        .data
+                        .retain(|v| !matches!(v, PrincipalData::BrandName(_)));
+                    if !value.is_empty() {
+                        principal.data.push(PrincipalData::BrandName(value));
+                    }
+                }
+                (
+                    PrincipalAction::Set,
+                    PrincipalField::BrandLogoUrl,
+                    PrincipalValue::String(value),
+                ) => {
+                    principal
+                        .data
+                        .retain(|v| !matches!(v, PrincipalData::BrandLogoUrl(_)));
+                    if !value.is_empty() {
+                        principal.data.push(PrincipalData::BrandLogoUrl(value));
+                    }
+                }
+                (
+                    PrincipalAction::Set,
+                    PrincipalField::BrandTheme,
+                    PrincipalValue::String(value),
+                ) => {
+                    principal
+                        .data
+                        .retain(|v| !matches!(v, PrincipalData::BrandTheme(_)));
+                    if !value.is_empty() {
+                        principal.data.push(PrincipalData::BrandTheme(value));
                     }
                 }
                 (PrincipalAction::Set, PrincipalField::Quota, PrincipalValue::Integer(quota))
@@ -2417,6 +2468,21 @@ impl ManageDirectory for Store {
                 PrincipalData::Url(url) => {
                     if fields.is_empty() || fields.contains(&PrincipalField::Urls) {
                         result.append_str(PrincipalField::Urls, url);
+                    }
+                }
+                PrincipalData::BrandName(name) => {
+                    if fields.is_empty() || fields.contains(&PrincipalField::BrandName) {
+                        result.set(PrincipalField::BrandName, name);
+                    }
+                }
+                PrincipalData::BrandLogoUrl(url) => {
+                    if fields.is_empty() || fields.contains(&PrincipalField::BrandLogoUrl) {
+                        result.set(PrincipalField::BrandLogoUrl, url);
+                    }
+                }
+                PrincipalData::BrandTheme(theme) => {
+                    if fields.is_empty() || fields.contains(&PrincipalField::BrandTheme) {
+                        result.set(PrincipalField::BrandTheme, theme);
                     }
                 }
                 PrincipalData::DirectoryQuota { quota, typ } => {
