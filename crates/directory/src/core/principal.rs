@@ -546,7 +546,10 @@ impl PrincipalData {
             | PrincipalData::Picture(v)
             | PrincipalData::ExternalMember(v)
             | PrincipalData::Url(v)
-            | PrincipalData::Locale(v) => v.len(),
+            | PrincipalData::Locale(v)
+            | PrincipalData::BrandName(v)
+            | PrincipalData::BrandLogoUrl(v)
+            | PrincipalData::BrandTheme(v) => v.len(),
             PrincipalData::DiskQuota(_) => U64_LEN,
             PrincipalData::Permission { .. } => U32_LEN + 1,
             PrincipalData::DirectoryQuota { .. } | PrincipalData::ObjectQuota { .. } => U64_LEN + 1,
@@ -1348,7 +1351,10 @@ impl<'de> serde::Deserialize<'de> for PrincipalSet {
                         PrincipalField::Description
                         | PrincipalField::Tenant
                         | PrincipalField::Picture
-                        | PrincipalField::Locale => {
+                        | PrincipalField::Locale
+                        | PrincipalField::BrandName
+                        | PrincipalField::BrandLogoUrl
+                        | PrincipalField::BrandTheme => {
                             if let Some(v) = map.next_value::<Option<String>>()? {
                                 if v.len() <= MAX_STRING_LEN {
                                     PrincipalValue::String(v)

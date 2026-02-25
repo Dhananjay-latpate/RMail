@@ -70,6 +70,11 @@ pub enum PrincipalData {
     // Secrets
     AppPassword(String),
     OtpAuth(String),
+
+    // Organization branding
+    BrandName(String),
+    BrandLogoUrl(String),
+    BrandTheme(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

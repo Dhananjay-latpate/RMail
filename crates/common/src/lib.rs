@@ -77,9 +77,9 @@ use crate::{config::spamfilter::SpamClassifier, ipc::TrainTaskController};
 pub static VERSION_PRIVATE: &str = env!("CARGO_PKG_VERSION");
 pub static VERSION_PUBLIC: &str = "1.0.0";
 
-pub static USER_AGENT: &str = "Stalwart/1.0.0";
-pub static DAEMON_NAME: &str = concat!("Stalwart v", env!("CARGO_PKG_VERSION"),);
-pub static PROD_ID: &str = "-//Stalwart Labs LLC//Stalwart Server//EN";
+pub static USER_AGENT: &str = "RMail/1.0.0";
+pub static DAEMON_NAME: &str = concat!("RMail v", env!("CARGO_PKG_VERSION"),);
+pub static PROD_ID: &str = "-//Relics IT Services//RMail Server//EN";
 
 /*
 

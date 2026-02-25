@@ -8,6 +8,7 @@ pub mod crypto;
 pub mod dkim;
 pub mod dns;
 pub mod log;
+pub mod organization;
 pub mod principal;
 pub mod queue;
 pub mod reload;
@@ -39,6 +40,7 @@ use jmap::api::{ToJmapHttpResponse, ToRequestError};
 use jmap_proto::error::request::RequestError;
 use log::LogManagement;
 use mail_parser::DateTime;
+use organization::OrganizationManager;
 use principal::PrincipalManager;
 use queue::QueueManagement;
 use reload::ManageReload;
@@ -105,6 +107,10 @@ impl ManagementApi for Server {
             "reports" => self.handle_manage_reports(req, path, &access_token).await,
             "principal" => {
                 self.handle_manage_principal(req, path, body, &access_token)
+                    .await
+            }
+            "organization" => {
+                self.handle_manage_organization(req, path, body, &access_token)
                     .await
             }
             "dns" => self.handle_manage_dns(req, path, &access_token).await,
@@ -292,8 +298,8 @@ impl UnauthorizedResponse for HttpResponse {
     fn unauthorized(include_realms: bool) -> Self {
         (if include_realms {
             HttpResponse::new(StatusCode::UNAUTHORIZED)
-                .with_header(header::WWW_AUTHENTICATE, "Bearer realm=\"Stalwart Server\"")
-                .with_header(header::WWW_AUTHENTICATE, "Basic realm=\"Stalwart Server\"")
+                .with_header(header::WWW_AUTHENTICATE, "Bearer realm=\"RMail Server\"")
+                .with_header(header::WWW_AUTHENTICATE, "Basic realm=\"RMail Server\"")
         } else {
             HttpResponse::new(StatusCode::UNAUTHORIZED)
         })
