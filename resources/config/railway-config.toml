@@ -1,0 +1,102 @@
+#############################################
+# RMail Railway Deployment Configuration
+#############################################
+# This configuration is optimized for Railway deployment.
+#
+# Railway provides:
+#   - PORT env var for the HTTP listener
+#   - DATABASE_URL env var from the PostgreSQL plugin
+#
+# Set these in the Railway dashboard:
+#   - ADMIN_SECRET: Fallback admin password
+#   - MAIL_HOSTNAME: Primary mail hostname (e.g., mail.example.com)
+
+# ---- Protocol Listeners ----
+
+# SMTP (port 25) - Inbound mail delivery
+[server.listener."smtp"]
+bind = ["[::]:25"]
+protocol = "smtp"
+
+# SMTP Submission (port 587) - Outbound mail from clients
+[server.listener."submission"]
+bind = ["[::]:587"]
+protocol = "smtp"
+
+# SMTP Submissions (port 465) - Outbound mail over TLS
+[server.listener."submissions"]
+bind = ["[::]:465"]
+protocol = "smtp"
+tls.implicit = true
+
+# IMAP (port 143) - Mailbox access
+[server.listener."imap"]
+bind = ["[::]:143"]
+protocol = "imap"
+
+# IMAPS (port 993) - Mailbox access over TLS
+[server.listener."imaptls"]
+bind = ["[::]:993"]
+protocol = "imap"
+tls.implicit = true
+
+# POP3 (port 110) - Mailbox access
+[server.listener.pop3]
+bind = "[::]:110"
+protocol = "pop3"
+
+# POP3S (port 995) - Mailbox access over TLS
+[server.listener.pop3s]
+bind = "[::]:995"
+protocol = "pop3"
+tls.implicit = true
+
+# ManageSieve (port 4190) - Sieve filter management
+[server.listener."sieve"]
+bind = ["[::]:4190"]
+protocol = "managesieve"
+
+# HTTPS (port 443) - Web admin, JMAP API
+[server.listener."https"]
+protocol = "http"
+bind = ["[::]:443"]
+tls.implicit = true
+
+# HTTP - Railway assigns the port dynamically via $PORT env var.
+# PORT is always provided by Railway; this listener is only used in Railway deployments.
+[server.listener."http"]
+protocol = "http"
+bind = ["[::]:%{env:PORT}%"]
+
+# ---- Storage (PostgreSQL via Railway Plugin) ----
+# Railway's PostgreSQL plugin provides DATABASE_URL automatically.
+
+[storage]
+data = "postgres"
+fts = "postgres"
+blob = "postgres"
+lookup = "postgres"
+directory = "internal"
+
+[store."postgres"]
+type = "postgresql"
+url = "%{env:DATABASE_URL}%"
+pool.max-connections = 20
+
+[directory."internal"]
+type = "internal"
+store = "postgres"
+
+# ---- Logging ----
+
+[tracer."stdout"]
+type = "stdout"
+level = "info"
+ansi = false
+enable = true
+
+# ---- Admin Account ----
+
+[authentication.fallback-admin]
+user = "admin"
+secret = "%{env:ADMIN_SECRET}%"

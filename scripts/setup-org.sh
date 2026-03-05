@@ -34,7 +34,7 @@ set -euo pipefail
 # ---- Defaults ----
 SERVER_URL="http://localhost:8080"
 SUPERADMIN_USER="admin"
-SUPERADMIN_PASS="${ADMIN_SECRET:-changeme}"
+SUPERADMIN_PASS="${ADMIN_SECRET:-}"
 QUOTA=10737418240  # 10 GB
 
 # ---- Parse Arguments ----
@@ -78,6 +78,11 @@ done
 if [[ -z "$DOMAIN" || -z "$ORG_NAME" || -z "$ADMIN_EMAIL" || -z "$ADMIN_PASS" ]]; then
     echo "Error: --domain, --org, --admin, and --password are all required."
     usage
+fi
+
+if [[ -z "$SUPERADMIN_PASS" ]]; then
+    echo "Error: Super-admin password is required. Set ADMIN_SECRET env var or use --secret."
+    exit 1
 fi
 
 AUTH_HEADER="Authorization: Basic $(echo -n "${SUPERADMIN_USER}:${SUPERADMIN_PASS}" | base64)"
