@@ -1,0 +1,63 @@
+# Multi-Organization Mail Server Deployment
+#
+# This docker-compose file sets up Stalwart Mail Server with PostgreSQL
+# as the centralized database for managing multiple client organizations.
+#
+# Usage:
+#   1. Copy .env.example to .env and configure your settings
+#   2. Run: docker compose up -d
+#   3. Access the admin panel at https://localhost:443 (or http://localhost:8080)
+#   4. Use scripts/setup-org.sh to onboard new client organizations
+#
+# Each organization (tenant) shares this single mail server instance
+# with isolated data, domains, quotas, and user management.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: rmail-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-stalwart}
+      POSTGRES_USER: ${POSTGRES_USER:-stalwart}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-stalwart_secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-stalwart}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  stalwart:
+    image: stalwartlabs/stalwart:latest
+    container_name: rmail-server
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ADMIN_SECRET: ${ADMIN_SECRET:-changeme}
+      DB_URL: postgresql://${POSTGRES_USER:-stalwart}:${POSTGRES_PASSWORD:-stalwart_secret}@postgres:5432/${POSTGRES_DB:-stalwart}
+    volumes:
+      - stalwart_data:/opt/stalwart
+      - ./resources/config/multi-org-config.toml:/opt/stalwart/etc/config.toml:ro
+    ports:
+      - "25:25"       # SMTP
+      - "587:587"     # SMTP Submission
+      - "465:465"     # SMTP Submissions (TLS)
+      - "143:143"     # IMAP
+      - "993:993"     # IMAPS
+      - "110:110"     # POP3
+      - "995:995"     # POP3S
+      - "4190:4190"   # ManageSieve
+      - "443:443"     # HTTPS (Web Admin + JMAP)
+      - "8080:8080"   # HTTP (initial setup)
+
+volumes:
+  postgres_data:
+    driver: local
+  stalwart_data:
+    driver: local

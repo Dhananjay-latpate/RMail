@@ -138,6 +138,59 @@ Install Stalwart on your server by following the instructions for your platform:
 
 All documentation is available at [stalw.art/docs](https://stalw.art/docs/install/get-started).
 
+## Multi-Organization Deployment
+
+RMail can serve multiple client organizations from a single instance using **PostgreSQL** as the centralized database. Each organization (tenant) gets isolated domains, users, and quotas.
+
+### Quick Start
+
+```bash
+# 1. Configure environment
+cp .env.example .env
+# Edit .env — set POSTGRES_PASSWORD, ADMIN_SECRET, etc.
+
+# 2. Start the server
+docker compose up -d
+
+# 3. Onboard a new client organization
+./scripts/setup-org.sh \
+  --domain "clientA.com" \
+  --org    "Client A Inc." \
+  --admin  "admin@clientA.com" \
+  --password "SecurePass123!"
+```
+
+### Architecture
+
+| Component | Purpose |
+|-----------|---------|
+| `docker-compose.yml` | Launches PostgreSQL + Stalwart mail server |
+| `resources/config/multi-org-config.toml` | Server config using PostgreSQL for all storage |
+| `scripts/setup-org.sh` | CLI script to onboard a new organization |
+| `.env.example` | Environment variable template |
+
+### Adding a New Organization
+
+Each call to `setup-org.sh` creates:
+1. A **tenant** — the organization container with a disk quota
+2. A **domain** — the email domain linked to the tenant
+3. A **tenant-admin** — an admin user that can manage users within the organization
+
+```bash
+./scripts/setup-org.sh \
+  --domain "clientB.org" \
+  --org    "Client B Corp." \
+  --admin  "admin@clientB.org" \
+  --password "AnotherSecure456!" \
+  --quota  21474836480  # 20 GB
+```
+
+After setup, the tenant admin can log in at the web admin panel and manage their own users, without access to other tenants' data.
+
+### Database
+
+All organizations share a single PostgreSQL database. The server handles tenant isolation internally — each tenant's data (emails, contacts, calendars, files) is logically separated. This makes it straightforward to back up, monitor, and maintain one central database for all clients.
+
 ## Support
 
 If you are having problems running Stalwart, you found a bug or just have a question, do not hesitate to reach us on [GitHub Discussions](https://github.com/stalwartlabs/stalwart/discussions), [Reddit](https://www.reddit.com/r/stalwartlabs) or [Discord](https://discord.com/servers/stalwart-923615863037390889).
