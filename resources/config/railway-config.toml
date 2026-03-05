@@ -62,7 +62,8 @@ protocol = "http"
 bind = ["[::]:443"]
 tls.implicit = true
 
-# HTTP - Railway assigns the port dynamically via $PORT env var
+# HTTP - Railway assigns the port dynamically via $PORT env var.
+# PORT is always provided by Railway; this listener is only used in Railway deployments.
 [server.listener."http"]
 protocol = "http"
 bind = ["[::]:%{env:PORT}%"]
