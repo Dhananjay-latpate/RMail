@@ -20,7 +20,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-stalwart}
       POSTGRES_USER: ${POSTGRES_USER:-stalwart}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-stalwart_secret}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -39,8 +39,8 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      ADMIN_SECRET: ${ADMIN_SECRET:-changeme}
-      DB_URL: postgresql://${POSTGRES_USER:-stalwart}:${POSTGRES_PASSWORD:-stalwart_secret}@postgres:5432/${POSTGRES_DB:-stalwart}
+      ADMIN_SECRET: ${ADMIN_SECRET:?Set ADMIN_SECRET in .env}
+      DB_URL: postgresql://${POSTGRES_USER:-stalwart}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-stalwart}
     volumes:
       - stalwart_data:/opt/stalwart
       - ./resources/config/multi-org-config.toml:/opt/stalwart/etc/config.toml:ro
@@ -55,6 +55,12 @@ services:
       - "4190:4190"   # ManageSieve
       - "443:443"     # HTTPS (Web Admin + JMAP)
       - "8080:8080"   # HTTP (initial setup)
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/healthz/live || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 volumes:
   postgres_data:

@@ -1,0 +1,22 @@
+# =============================================================================
+# RMail - Railway Deployment Configuration
+# =============================================================================
+# This file configures how Railway builds and deploys the RMail server.
+#
+# Required Railway environment variables (set in Railway dashboard):
+#   DATABASE_URL    - Provided automatically by Railway's PostgreSQL plugin
+#   ADMIN_SECRET    - Fallback admin password (set manually)
+#   MAIL_HOSTNAME   - Primary mail hostname (e.g., mail.example.com)
+#
+# Optional:
+#   PORT            - Provided automatically by Railway (HTTP listener port)
+
+[build]
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/healthz/live"
+healthcheckTimeout = 300
+numReplicas = 1
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 5

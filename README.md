@@ -135,8 +135,49 @@ Install Stalwart on your server by following the instructions for your platform:
 - [Linux / MacOS](https://stalw.art/docs/install/platform/linux)
 - [Windows](https://stalw.art/docs/install/platform/windows)
 - [Docker](https://stalw.art/docs/install/platform/docker)
+- [Railway (Cloud)](#railway-cloud) — one-click cloud deployment
 
 All documentation is available at [stalw.art/docs](https://stalw.art/docs/install/get-started).
+
+## Deployment
+
+### Docker Compose (Self-Hosted)
+
+The recommended way to run RMail on your own infrastructure:
+
+```bash
+# 1. Configure environment
+cp .env.example .env
+# Edit .env — set POSTGRES_PASSWORD, ADMIN_SECRET, MAIL_HOSTNAME
+
+# 2. Start the server
+docker compose up -d
+
+# 3. Access the admin panel
+# https://localhost:443 or http://localhost:8080
+```
+
+### Railway (Cloud)
+
+Deploy RMail to [Railway](https://railway.app) for managed cloud hosting:
+
+1. **Create a Railway project** and add a **PostgreSQL** plugin (Railway provides `DATABASE_URL` automatically).
+
+2. **Deploy from GitHub** — connect this repository. Railway will detect the `Dockerfile` and `railway.toml` automatically.
+
+3. **Set environment variables** in the Railway dashboard:
+
+   | Variable | Required | Description |
+   |----------|----------|-------------|
+   | `DATABASE_URL` | Auto | Provided by Railway's PostgreSQL plugin |
+   | `PORT` | Auto | Provided by Railway for the HTTP listener |
+   | `ADMIN_SECRET` | **Yes** | Fallback admin password (use a strong password) |
+   | `MAIL_HOSTNAME` | **Yes** | Primary hostname (e.g., `mail.example.com`) |
+   | `RAILWAY_ENVIRONMENT` | Auto | Set by Railway (triggers Railway config) |
+
+4. **Deploy** — Railway builds the Docker image and starts the server. The admin panel is available at your Railway-assigned URL.
+
+> **Note:** Railway exposes HTTP/HTTPS by default. For full mail server functionality (SMTP, IMAP, POP3), you may need to configure Railway's TCP proxy or use a dedicated VPS for mail ports.
 
 ## Multi-Organization Deployment
 

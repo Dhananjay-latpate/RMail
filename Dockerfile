@@ -32,10 +32,12 @@ FROM docker.io/debian:trixie-slim
 WORKDIR /opt/stalwart
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
-    apt-get install -yq --no-install-recommends ca-certificates
+    apt-get install -yq --no-install-recommends ca-certificates curl && \
+    rm -rf /var/lib/apt/lists/*
 COPY --from=builder /output/stalwart /usr/local/bin
 COPY --from=builder /output/stalwart-cli /usr/local/bin
 COPY ./resources/docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY ./resources/config/railway-config.toml /opt/stalwart/etc/railway-config.toml
 RUN chmod -R 755 /usr/local/bin
 CMD ["/usr/local/bin/stalwart"]
 VOLUME [ "/opt/stalwart" ]
