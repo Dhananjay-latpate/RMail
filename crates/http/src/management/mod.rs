@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-SEL
  */
 
+pub mod branding;
 pub mod crypto;
 pub mod dkim;
 pub mod dns;
@@ -30,6 +31,7 @@ use enterprise::telemetry::TelemetryApi;
 
 use crate::auth::oauth::auth::OAuthApiHandler;
 use common::{Server, auth::AccessToken};
+use branding::BrandingManager;
 use crypto::CryptoHandler;
 use directory::{Permission, backend::internal::manage};
 use dkim::DkimManagement;
@@ -111,6 +113,10 @@ impl ManagementApi for Server {
             }
             "organization" => {
                 self.handle_manage_organization(req, path, body, &access_token)
+                    .await
+            }
+            "branding" => {
+                self.handle_manage_branding(req, path, &access_token)
                     .await
             }
             "dns" => self.handle_manage_dns(req, path, &access_token).await,

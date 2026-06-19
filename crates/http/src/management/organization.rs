@@ -42,6 +42,10 @@ pub struct OrganizationProvisionRequest {
     // Optional org description
     #[serde(default)]
     pub description: Option<String>,
+
+    // Optional storage quota in bytes for the tenant
+    #[serde(default)]
+    pub quota: Option<u64>,
 }
 
 /// Response for organization provisioning
@@ -134,6 +138,12 @@ impl OrganizationManager for Server {
                     tenant.fields.insert(
                         PrincipalField::BrandTheme,
                         PrincipalValue::String(brand_theme.clone()),
+                    );
+                }
+                if let Some(quota) = request.quota {
+                    tenant.fields.insert(
+                        PrincipalField::Quota,
+                        PrincipalValue::Integer(quota),
                     );
                 }
 

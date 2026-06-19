@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrgStatus {
+  PENDING_PAYMENT
+  PROVISIONING
+  ONBOARDING
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+}
+
+enum OnboardingStep {
+  DNS_VERIFICATION
+  MX_SETUP
+  DKIM_SETUP
+  USERS
+  COMPLETE
+}
+
+enum PlanTier {
+  STARTER
+  BUSINESS
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  UNPAID
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  orgMembers   OrgMember[]
+  auditLogs    AuditLog[]
+}
+
+model Organization {
+  id                String             @id @default(cuid())
+  name              String
+  slug              String             @unique
+  domain            String
+  status            OrgStatus          @default(PENDING_PAYMENT)
+  onboardingStep    OnboardingStep     @default(DNS_VERIFICATION)
+  plan              PlanTier           @default(STARTER)
+  seatLimit         Int                @default(5)
+  storageQuotaBytes BigInt             @default(10737418240)
+  rmailTenantId     Int?
+  rmailDomainId     Int?
+  rmailAdminId      Int?
+  brandName         String?
+  brandLogoUrl      String?
+  brandTheme        String?
+  domainVerified    Boolean            @default(false)
+  mxVerified        Boolean            @default(false)
+  dkimVerified      Boolean            @default(false)
+  stripeCustomerId  String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  members           OrgMember[]
+  subscription      Subscription?
+  auditLogs         AuditLog[]
+  ssoConfig         SsoConfig?
+  usageSnapshots    UsageSnapshot[]
+}
+
+model OrgMember {
+  id        String       @id @default(cuid())
+  orgId     String
+  userId    String
+  role      String       @default("admin")
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
+
+  @@unique([orgId, userId])
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  orgId                String             @unique
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+  status               SubscriptionStatus @default(TRIALING)
+  seatCount            Int                @default(5)
+  currentPeriodEnd     DateTime?
+  org                  Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+}
+
+model AuditLog {
+  id        String        @id @default(cuid())
+  orgId     String?
+  userId    String?
+  action    String
+  details   Json?
+  ipAddress String?
+  org       Organization? @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  user      User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime      @default(now())
+
+  @@index([orgId, createdAt])
+}
+
+model SsoConfig {
+  id           String       @id @default(cuid())
+  orgId        String       @unique
+  provider     String
+  issuerUrl    String
+  clientId     String
+  clientSecret String
+  enabled      Boolean      @default(false)
+  org          Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model UsageSnapshot {
+  id              String       @id @default(cuid())
+  orgId           String
+  storageUsedBytes BigInt      @default(0)
+  userCount       Int          @default(0)
+  capturedAt      DateTime     @default(now())
+  org             Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, capturedAt])
+}

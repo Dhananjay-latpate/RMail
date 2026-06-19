@@ -183,6 +183,22 @@ Deploy RMail to [Railway](https://railway.app) for managed cloud hosting:
 
 RMail can serve multiple client organizations from a single instance using **PostgreSQL** as the centralized database. Each organization (tenant) gets isolated domains, users, and quotas.
 
+> **Note:** Multi-tenant SaaS requires a valid **Stalwart Enterprise License** (`ENTERPRISE_LICENSE_KEY` in `.env`). The Docker Compose setup builds RMail from source with enterprise features enabled.
+
+### Google Workspace-Style Product
+
+For self-service signup, billing, and org admin, see the **product control plane** in [`product/`](product/):
+
+```bash
+cd product && cp .env.example .env && docker compose up -d
+```
+
+- Portal (signup/admin): http://localhost:3000
+- Product API: http://localhost:4000
+- Webmail: http://localhost:3001
+
+See [`product/README.md`](product/README.md) and [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for full setup.
+
 ### Quick Start
 
 ```bash

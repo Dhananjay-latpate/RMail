@@ -1,0 +1,32 @@
+/* RMail Workspace Admin — branding theme override */
+/* Apply after forking stalwartlabs/webadmin */
+
+:root {
+  --brand-primary: #1976d2;
+  --brand-primary-dark: #115293;
+  --brand-accent: #ff4081;
+  --brand-bg: #f5f7fa;
+  --brand-surface: #ffffff;
+  --brand-text: #1a1a2e;
+  --brand-font: system-ui, -apple-system, sans-serif;
+}
+
+body {
+  font-family: var(--brand-font);
+}
+
+.navbar-brand,
+.app-title {
+  content: "RMail Workspace";
+}
+
+.footer-credit {
+  display: none;
+}
+
+.login-logo::after {
+  content: "RMail";
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--brand-primary);
+}

@@ -1,0 +1,73 @@
+services:
+  product-postgres:
+    image: postgres:16-alpine
+    container_name: rmail-product-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: rmail_product
+      POSTGRES_USER: product
+      POSTGRES_PASSWORD: ${PRODUCT_DB_PASSWORD:-product}
+    volumes:
+      - product_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U product"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  product-api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: rmail-product-api
+    restart: unless-stopped
+    depends_on:
+      product-postgres:
+        condition: service_healthy
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgresql://product:${PRODUCT_DB_PASSWORD:-product}@product-postgres:5432/rmail_product
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+      RMAIL_API_URL: ${RMAIL_API_URL:-http://host.docker.internal:8080}
+      RMAIL_ADMIN_USER: ${RMAIL_ADMIN_USER:-admin}
+      RMAIL_ADMIN_SECRET: ${RMAIL_ADMIN_SECRET:?Set RMAIL_ADMIN_SECRET}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PRICE_STARTER: ${STRIPE_PRICE_STARTER:-}
+      STRIPE_PRICE_BUSINESS: ${STRIPE_PRICE_BUSINESS:-}
+      STRIPE_PRICE_ENTERPRISE: ${STRIPE_PRICE_ENTERPRISE:-}
+      MAIL_HOSTNAME: ${MAIL_HOSTNAME:-mail.example.com}
+    ports:
+      - "4000:4000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  product-portal:
+    build:
+      context: ./portal
+      dockerfile: Dockerfile
+    container_name: rmail-product-portal
+    restart: unless-stopped
+    depends_on:
+      - product-api
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
+    ports:
+      - "3000:3000"
+
+  product-webmail:
+    build:
+      context: ./webmail
+      dockerfile: Dockerfile
+    container_name: rmail-product-webmail
+    restart: unless-stopped
+    environment:
+      VITE_RMAIL_API_URL: ${NEXT_PUBLIC_WEBMAIL_API_URL:-http://localhost:8080}
+    ports:
+      - "3001:3001"
+
+volumes:
+  product_postgres_data:

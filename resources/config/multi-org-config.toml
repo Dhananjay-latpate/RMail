@@ -4,6 +4,24 @@
 # This configuration uses PostgreSQL as the centralized database
 # for all client organizations (tenants). Each organization gets
 # isolated domains, users, quotas, and data within a shared server.
+#
+# Required environment variables:
+#   DB_URL                  - PostgreSQL connection string
+#   ADMIN_SECRET            - Fallback super-admin password
+#   MAIL_HOSTNAME           - Primary mail hostname (e.g. mail.example.com)
+#   ENTERPRISE_LICENSE_KEY  - Stalwart Enterprise license (required for tenants)
+
+# ---- Server Identity ----
+
+[server]
+hostname = "%{env:MAIL_HOSTNAME}%"
+
+[lookup]
+default.hostname = "%{env:MAIL_HOSTNAME}%"
+
+# ---- Enterprise License (multi-tenancy) ----
+
+enterprise.license-key = "%{env:ENTERPRISE_LICENSE_KEY}%"
 
 # ---- Protocol Listeners ----
 
