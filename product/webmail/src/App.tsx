@@ -4,6 +4,7 @@ import {
   fetchBranding,
   fetchJmapSession,
   jmapCall,
+  mailAccountId,
   sendEmail,
   type Branding,
   type JmapSession,
@@ -38,8 +39,9 @@ export default function App() {
 
   const loadInbox = useCallback(async (authToken: string, jmapSession: JmapSession) => {
     type Response = [string, { list?: { id: string; subject?: string; from?: Email["from"]; receivedAt?: string; preview?: string; keywords?: Record<string, boolean> }[] }];
+    const accountId = mailAccountId(jmapSession);
     const responses = await jmapCall<Response[]>(jmapSession, authToken, [
-      ["Email/query", { accountId: "self", limit: 50 }, "q0"],
+      ["Email/query", { accountId, limit: 50 }, "q0"],
       ["Email/get", { "#ids": { resultOf: "q0", name: "Email/query", path: "/ids" }, properties: ["id", "subject", "from", "receivedAt", "preview", "keywords"] }, "g0"],
     ]);
 

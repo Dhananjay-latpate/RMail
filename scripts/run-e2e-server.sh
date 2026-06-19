@@ -5,8 +5,14 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 E2E_DIR="${E2E_DATA_DIR:-$ROOT/.e2e-data}"
 ADMIN_SECRET="${ADMIN_SECRET:-e2e-admin-secret}"
-MAIL_HOSTNAME="${MAIL_HOSTNAME:-mail.localhost}"
-STALWART_BIN="${STALWART_BIN:-$ROOT/target/debug/stalwart}"
+MAIL_HOSTNAME="${MAIL_HOSTNAME:-localhost}"
+if [[ -x "$ROOT/target/debug/stalwart" ]]; then
+  STALWART_BIN="${STALWART_BIN:-$ROOT/target/debug/stalwart}"
+elif [[ -x "$ROOT/target/debug/stalwart.exe" ]]; then
+  STALWART_BIN="${STALWART_BIN:-$ROOT/target/debug/stalwart.exe}"
+else
+  STALWART_BIN="${STALWART_BIN:-$ROOT/target/debug/stalwart}"
+fi
 
 if [[ ! -x "$STALWART_BIN" ]]; then
   echo "Building stalwart (debug)…"
@@ -41,7 +47,11 @@ if [[ ! -f "$E2E_DIR/etc/config.toml" ]]; then
     echo "[spam-filter]"
     echo "enable = false"
     echo ""
-    echo "config.resource.spam-filter = \"file:///dev/null\""
+    if [[ "$(uname -s 2>/dev/null)" == MINGW* || "$(uname -s 2>/dev/null)" == MSYS* ]]; then
+      echo "config.resource.spam-filter = \"file:///NUL\""
+    else
+      echo "config.resource.spam-filter = \"file:///dev/null\""
+    fi
   } >> "$E2E_DIR/etc/config.toml"
   if grep -q '^secret =' "$E2E_DIR/etc/config.toml"; then
     sed -i "s/^secret =.*/secret = \"${ADMIN_SECRET}\"/" "$E2E_DIR/etc/config.toml"

@@ -11,6 +11,17 @@ export interface JmapSession {
   downloadUrl?: string;
   uploadUrl?: string;
   capabilities?: Record<string, unknown>;
+  accounts?: Record<string, { name?: string }>;
+  primaryAccounts?: Record<string, string>;
+  username?: string;
+}
+
+export function mailAccountId(session: JmapSession): string {
+  const fromPrimary = session.primaryAccounts?.["urn:ietf:params:jmap:mail"];
+  if (fromPrimary) return fromPrimary;
+  const accountIds = session.accounts ? Object.keys(session.accounts) : [];
+  if (accountIds.length === 1) return accountIds[0]!;
+  throw new Error("No mail account in JMAP session");
 }
 
 function authHeader(token: string): string {
@@ -70,23 +81,22 @@ export async function sendEmail(
   body: string,
 ): Promise<void> {
   type MethodResponse = [string, Record<string, unknown>];
+  const accountId = mailAccountId(session);
 
   const responses = await jmapCall<MethodResponse[]>(session, token, [
-    ["Identity/query", { accountId: "self" }, "iq"],
     [
       "Identity/get",
       {
-        accountId: "self",
-        "#ids": { resultOf: "iq", name: "Identity/query", path: "/ids" },
+        accountId,
         properties: ["id", "email", "name"],
       },
       "ig",
     ],
-    ["Mailbox/query", { accountId: "self", filter: { role: "drafts" } }, "mq"],
+    ["Mailbox/query", { accountId, filter: { role: "drafts" } }, "mq"],
     [
       "Mailbox/get",
       {
-        accountId: "self",
+        accountId,
         "#ids": { resultOf: "mq", name: "Mailbox/query", path: "/ids" },
         properties: ["id"],
       },
@@ -97,8 +107,40 @@ export async function sendEmail(
   const identityGet = responses.find((r) => r[0] === "Identity/get")?.[1] as
     | { list?: { id: string; email: string; name?: string }[] }
     | undefined;
-  const identity = identityGet?.list?.[0];
-  if (!identity) throw new Error("No sending identity found");
+  let identity = identityGet?.list?.[0];
+
+  if (!identity) {
+    const senderEmail = session.username;
+    if (!senderEmail) throw new Error("No sending identity found");
+    const createResponses = await jmapCall<MethodResponse[]>(session, token, [
+      [
+        "Identity/set",
+        {
+          accountId,
+          create: {
+            "identity-e2e": {
+              email: senderEmail,
+              name: senderEmail.split("@")[0],
+            },
+          },
+        },
+        "is",
+      ],
+    ]);
+    const identitySet = createResponses.find((r) => r[0] === "Identity/set")?.[1] as
+      | {
+          created?: Record<string, { id?: string }>;
+          notCreated?: Record<string, { description?: string }>;
+        }
+      | undefined;
+    if (identitySet?.notCreated && Object.keys(identitySet.notCreated).length > 0) {
+      const err = Object.values(identitySet.notCreated)[0]?.description ?? "Failed to create identity";
+      throw new Error(err);
+    }
+    const createdId = identitySet?.created?.["identity-e2e"]?.id;
+    if (!createdId) throw new Error("Failed to create sending identity");
+    identity = { id: createdId, email: senderEmail };
+  }
 
   const mailboxGet = responses.find((r) => r[0] === "Mailbox/get")?.[1] as
     | { list?: { id: string }[] }
@@ -112,7 +154,7 @@ export async function sendEmail(
     [
       "Email/set",
       {
-        accountId: "self",
+        accountId,
         create: {
           [draftId]: {
             mailboxIds: { [mailboxId]: true },
@@ -145,7 +187,7 @@ export async function sendEmail(
     [
       "EmailSubmission/set",
       {
-        accountId: "self",
+        accountId,
         create: {
           send1: {
             identityId: identity.id,
