@@ -1,51 +1,32 @@
-# Build artifacts
 /target
+*.failed
+*_failed
+run.sh
+.*
+!.gitignore
+!.gitattributes
+!.github
+CLAUDE.md
+
+# --- RMail product layer ---
 /dist
 /artifact
 node_modules/
 product/**/node_modules/
 product/**/.next/
 product/**/dist/
-
-# IDE settings
-.vscode
-.idea
-
-# Test artifacts
-*.failed
-*_failed
-
-# Local scripts
-run.sh
-_ignore
-
-# OS files
-.DS_Store
 Thumbs.db
-
-# Environment and secrets
-.env
-.env.local
-.env.*.local
-
-# TLS certificates and keys
 *.pem
 *.key
 *.crt
 *.p12
 *.pfx
-
-# Log files
 *.log
 logs/
-
-# Data directories
 /data
 stalwart_data/
 postgres_data/
 .e2e-data/
-
-# Temporary files
 /tmp
 *.tmp
 *.swp
