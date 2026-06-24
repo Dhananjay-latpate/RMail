@@ -5,7 +5,7 @@ set -euo pipefail
 SERVER_URL="${RMAIL_API_URL:-http://localhost:8080}"
 SUPERADMIN_USER="${RMAIL_ADMIN_USER:-admin}"
 SUPERADMIN_PASS="${ADMIN_SECRET:?Set ADMIN_SECRET}"
-DOMAIN="${E2E_DOMAIN:-e2e.local}"
+DOMAIN="${E2E_DOMAIN:-example.com}"
 ALICE="${E2E_ALICE:-alice@${DOMAIN}}"
 BOB="${E2E_BOB:-bob@${DOMAIN}}"
 ALICE_PASS="${E2E_ALICE_PASS:-AlicePass123!}"
@@ -34,6 +34,16 @@ post_principal() {
   return 1
 }
 
+ensure_email() {
+  local email="$1"
+  local encoded
+  encoded=$(python -c "import urllib.parse; print(urllib.parse.quote('$email'))" 2>/dev/null || echo "$email")
+  curl -s -X PATCH \
+    -H "$AUTH" -H "Content-Type: application/json" \
+    -d "[{\"action\":\"addItem\",\"field\":\"emails\",\"value\":\"${email}\"}]" \
+    "${API}/principal/${encoded}" >/dev/null || true
+}
+
 echo "==> E2E mail setup on $SERVER_URL"
 echo "    Domain: $DOMAIN"
 echo "    Alice : $ALICE"
@@ -50,10 +60,13 @@ post_principal "$(cat <<EOF
   "name": "${ALICE}",
   "description": "E2E Alice",
   "roles": ["user"],
-  "secrets": ["${ALICE_PASS}"]
+  "secrets": ["${ALICE_PASS}"],
+  "emails": ["${ALICE}"]
 }
 EOF
 )"
+
+ensure_email "${ALICE}"
 
 post_principal "$(cat <<EOF
 {
@@ -61,10 +74,13 @@ post_principal "$(cat <<EOF
   "name": "${BOB}",
   "description": "E2E Bob",
   "roles": ["user"],
-  "secrets": ["${BOB_PASS}"]
+  "secrets": ["${BOB_PASS}"],
+  "emails": ["${BOB}"]
 }
 EOF
 )"
+
+ensure_email "${BOB}"
 
 echo ""
 echo "E2E users ready."
