@@ -1,7 +1,24 @@
-# Start a local RMail instance for browser E2E (SQLite, no Docker).
+# Start a local RMail (Stalwart 0.16.x) instance for browser E2E (SQLite, no Docker).
+#
+# The 0.16 server replaced the old `--init` + config.toml model with:
+#   * a single JSON "data store" file passed via `--config`
+#   * a registry of typed objects (domains, accounts, listeners, ...) that the
+#     server provisions on first boot via `insert_safe_defaults`.
+#
+# This script writes a SQLite data-store config and boots the server. On the
+# first boot against an empty database the server creates default roles, an
+# internal-directory authentication object and the default network listeners
+# (plain HTTP/JMAP on 8080, SMTP on 25, ...). A fixed "recovery" admin is pinned
+# via STALWART_RECOVERY_ADMIN so the provisioning script (e2e-mail-setup.ps1)
+# can authenticate without parsing a randomly generated secret.
+#
+# Provisioning of the example.com domain + alice/bob mailboxes is done
+# separately by scripts/e2e-mail-setup.ps1 once this server is up.
 param(
-    [string]$AdminSecret = $(if ($env:ADMIN_SECRET) { $env:ADMIN_SECRET } else { "e2e-admin-secret" }),
-    [string]$MailHostname = $(if ($env:MAIL_HOSTNAME) { $env:MAIL_HOSTNAME } else { "localhost" })
+    [string]$AdminUser = $(if ($env:RMAIL_ADMIN_USER) { $env:RMAIL_ADMIN_USER } else { "admin" }),
+    [string]$AdminPass = $(if ($env:ADMIN_SECRET) { $env:ADMIN_SECRET } else { "AdminPass123!" }),
+    [string]$MailHostname = $(if ($env:MAIL_HOSTNAME) { $env:MAIL_HOSTNAME } else { "localhost" }),
+    [int]$HttpPort = $(if ($env:RMAIL_HTTP_PORT) { [int]$env:RMAIL_HTTP_PORT } else { 8080 })
 )
 
 $ErrorActionPreference = "Stop"
@@ -31,54 +48,28 @@ if (-not (Test-Path $StalwartBin)) {
     }
 }
 
-$configPath = Join-Path $E2eDir "etc\config.toml"
-if (-not (Test-Path $configPath)) {
-    Write-Host "Initializing RMail at $E2eDir"
-    if (Test-Path $E2eDir) { Remove-Item -Recurse -Force $E2eDir }
+# Data directory + SQLite data-store config file.
+$DataDir = Join-Path $E2eDir "data"
+if (-not (Test-Path $DataDir)) { New-Item -ItemType Directory -Force -Path $DataDir | Out-Null }
 
-    & $StalwartBin --init $E2eDir
-    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+$DbPath = (Join-Path $DataDir "stalwart.db") -replace '\\', '/'
+$ConfigPath = Join-Path $E2eDir "config.json"
+$config = @{
+    '@type'              = 'Sqlite'
+    path                 = $DbPath
+    poolMaxConnections   = 10
+} | ConvertTo-Json -Compress
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText($ConfigPath, $config, $utf8NoBom)
 
-    $content = Get-Content $configPath -Raw
-    $e2ePath = ($E2eDir -replace '\\', '/')
-    $content = Get-Content $configPath -Raw
-    $content = $content -replace '\\', '/'
-    $content = $content `
-        -replace 'data = "rocksdb"', 'data = "sqlite"' `
-        -replace 'fts = "rocksdb"', 'fts = "sqlite"' `
-        -replace 'blob = "rocksdb"', 'blob = "sqlite"' `
-        -replace 'lookup = "rocksdb"', 'lookup = "sqlite"' `
-        -replace '\[store\.rocksdb\]', '[store.sqlite]' `
-        -replace 'type = "rocksdb"', 'type = "sqlite"' `
-        -replace "path = `"$e2ePath/data`"", "path = `"$e2ePath/data/stalwart.db`"" `
-        -replace 'store = "rocksdb"', 'store = "sqlite"'
+# Pin a deterministic fallback admin so provisioning can authenticate, force the
+# hostname to localhost and advertise the plain-HTTP JMAP endpoint in the JMAP
+# session object (otherwise the server would advertise an https:// URL the dev
+# webmail cannot reach).
+$env:STALWART_RECOVERY_ADMIN = "${AdminUser}:${AdminPass}"
+$env:STALWART_HOSTNAME = $MailHostname
+$env:STALWART_PUBLIC_URL = "http://localhost:$HttpPort"
 
-    $append = @"
-
-[http]
-permissive-cors = true
-
-[server]
-hostname = "$MailHostname"
-
-[lookup]
-default.hostname = "$MailHostname"
-
-[spam-filter]
-enable = false
-
-config.resource.spam-filter = "file:///NUL"
-
-"@
-
-    $content = $content + $append
-    if ($content -match '(?m)^secret =') {
-        $content = $content -replace '(?m)^secret =.*', "secret = `"$AdminSecret`""
-    }
-    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
-    [System.IO.File]::WriteAllText($configPath, $content, $utf8NoBom)
-}
-
-$env:ADMIN_SECRET = $AdminSecret
-Write-Host "Starting RMail on http://localhost:8080 (data: $E2eDir)"
-& $StalwartBin --config $configPath
+Write-Host "Starting RMail on http://localhost:$HttpPort (data: $E2eDir)"
+Write-Host "  admin login: $AdminUser / $AdminPass"
+& $StalwartBin --config $ConfigPath
