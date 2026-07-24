@@ -1,0 +1,37 @@
+RMail Proprietary License
+=========================
+
+Copyright (c) 2026 Resillix. All rights reserved.
+
+This software, including all source code, configuration, and assets located in
+this "product/" directory (the "Software"), is the proprietary and confidential
+property of Resillix (the "Company").
+
+NO LICENSE OR RIGHT is granted to any person or entity to use, copy, reproduce,
+modify, merge, publish, distribute, sublicense, host, or sell the Software, in
+whole or in part, except under a separate written agreement signed by the
+Company. All rights not expressly granted are reserved by the Company.
+
+Unauthorized copying, distribution, modification, public display, or use of the
+Software, via any medium, is strictly prohibited.
+
+THIRD-PARTY COMPONENTS
+---------------------
+The Software is designed to operate alongside, and communicates over standard
+network protocols (JMAP over HTTP and the Stalwart administration REST API)
+with, Stalwart Mail Server -- a separate, independent program licensed under the
+GNU Affero General Public License v3.0 (AGPL-3.0-only), with certain Enterprise
+features under the Stalwart Enterprise License v2 (SELv2). Those components
+remain governed by their own licenses; see the repository's top-level
+"LICENSES/" directory and the "NOTICE.md" file in this directory.
+
+The Software is a separate work and is not a derivative work of Stalwart Mail
+Server.
+
+NO WARRANTY
+-----------
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE COMPANY BE
+LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM, OUT OF, OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

@@ -42,7 +42,7 @@ export default function App() {
     const accountId = mailAccountId(jmapSession);
     const responses = await jmapCall<Response[]>(jmapSession, authToken, [
       ["Email/query", { accountId, limit: 50 }, "q0"],
-      ["Email/get", { "#ids": { resultOf: "q0", name: "Email/query", path: "/ids" }, properties: ["id", "subject", "from", "receivedAt", "preview", "keywords"] }, "g0"],
+      ["Email/get", { accountId, "#ids": { resultOf: "q0", name: "Email/query", path: "/ids" }, properties: ["id", "subject", "from", "receivedAt", "preview", "keywords"] }, "g0"],
     ]);
 
     const getResult = responses.find((r) => r[0] === "Email/get");
